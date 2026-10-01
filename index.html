@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light" />
+<title>Geno QR</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect x='1' y='1' width='9' height='9' rx='1.5' fill='none' stroke='%23000000' stroke-width='2'/%3E%3Crect x='18' y='1' width='9' height='9' rx='1.5' fill='none' stroke='%23000000' stroke-width='2'/%3E%3Crect x='1' y='18' width='9' height='9' rx='1.5' fill='none' stroke='%23000000' stroke-width='2'/%3E%3Crect x='4' y='4' width='3' height='3' fill='%23000000'/%3E%3Crect x='21' y='4' width='3' height='3' fill='%23000000'/%3E%3Crect x='4' y='21' width='3' height='3' fill='%23000000'/%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --white: #FFFFFF;
+    --black: #000000;
+    --ink-muted: #555555;
+    --card-muted: #ABABAB;
+    --hover-dark: #262626;
+    --hover-light: #E6E6E6;
+    --error: #B00020;
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--white);
+    background-image: radial-gradient(circle, rgba(0, 0, 0, 0.14) 1px, transparent 1px);
+    background-size: 22px 22px;
+    color: var(--black);
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 48px 20px 64px;
+  }
+
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  }
+
+  .page {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 34px;
+    padding: 8px 16px 8px 12px;
+    background: var(--white);
+    border: 2px solid var(--black);
+    border-radius: 999px;
+  }
+  .brand svg { color: var(--black); }
+  .brand span {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: -0.01em;
+  }
+
+  h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: clamp(2.1rem, 8vw, 3.2rem);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    margin: 0 0 16px;
+  }
+
+  .subtext {
+    color: var(--ink-muted);
+    font-size: 1.02rem;
+    line-height: 1.55;
+    max-width: 38ch;
+    margin: 0 0 36px;
+  }
+
+  .tool { width: 100%; margin-bottom: 36px; }
+
+  .input-row {
+    display: flex;
+    background: var(--white);
+    border: 2px solid var(--black);
+    border-radius: 16px;
+    padding: 5px;
+    box-shadow: 5px 5px 0 var(--black);
+  }
+  .input-row:focus-within { outline: 3px solid var(--black); outline-offset: 4px; }
+
+  input[type="text"] {
+    flex: 1;
+    min-width: 0;
+    padding: 12px 14px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 1rem;
+    color: var(--black);
+    background: transparent;
+    border: none;
+    outline: none;
+  }
+  input[type="text"]::placeholder { color: var(--ink-muted); }
+
+  .btn {
+    border: none;
+    border-radius: 11px;
+    padding: 12px 20px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+
+  .btn-generate { background: var(--black); color: var(--white); flex-shrink: 0; }
+  .btn-generate:hover { background: var(--hover-dark); }
+  .btn-generate:focus-visible { outline: 3px solid var(--black); outline-offset: 3px; }
+
+  .btn-download {
+    background: var(--white);
+    color: var(--black);
+    width: 100%;
+    margin-top: 22px;
+    padding: 14px 20px;
+  }
+  .btn-download:hover { background: var(--hover-light); }
+  .btn-download:focus-visible { outline: 3px solid var(--white); outline-offset: 3px; }
+
+
+
+  /* ----- mode switch ----- */
+  .modes {
+    display: inline-flex;
+    gap: 4px;
+    padding: 4px;
+    margin-bottom: 30px;
+    background: var(--white);
+    border: 2px solid var(--black);
+    border-radius: 999px;
+  }
+  .mode-btn {
+    border: none;
+    background: transparent;
+    color: var(--black);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 9px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+  .mode-btn:hover { background: var(--hover-light); }
+  .mode-btn[aria-selected="true"] { background: var(--black); color: var(--white); }
+  .mode-btn[aria-selected="true"]:hover { background: var(--hover-dark); }
+  .mode-btn:focus-visible { outline: 3px solid var(--black); outline-offset: 3px; }
+  .panel { width: 100%; }
+  .panel[hidden] { display: none; }
+
+  .g3-line { color: var(--white); font-size: 0.85rem; line-height: 1.5; margin: 14px 0 0; text-align: center; }
+  .g3-line.dim { color: var(--card-muted); margin-top: 8px; }
+  .scan-link { color: var(--black); font-weight: 600; text-underline-offset: 3px; }
+  .scan-link:focus-visible { outline: 3px solid var(--black); outline-offset: 3px; }
+
+  .logo-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 22px;
+  }
+  .logo-input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; pointer-events: none; }
+  .btn-logo:focus-visible { outline: 3px solid var(--black); outline-offset: 3px; }
+  .logo-row.is-drop .btn-logo { background: var(--hover-light); }
+  .btn-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--white);
+    color: var(--black);
+    border: 2px solid var(--black);
+    padding: 10px 16px;
+  }
+  .btn-logo:hover { background: var(--hover-light); }
+  .logo-thumb {
+    width: 46px;
+    height: 46px;
+    object-fit: contain;
+    background: var(--white);
+    border: 2px solid var(--black);
+    border-radius: 12px;
+    padding: 4px;
+  }
+  .btn-text {
+    background: transparent;
+    color: var(--black);
+    padding: 8px 6px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .btn-text:hover { background: var(--hover-light); }
+  .btn-text:focus-visible { outline: 3px solid var(--black); outline-offset: 2px; }
+  .logo-hint {
+    color: var(--ink-muted);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    margin: 12px 0 0;
+  }
+  .logo-row[hidden], .logo-thumb[hidden], .btn-text[hidden] { display: none; }
+
+  .error-text {
+    color: var(--error);
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin: 14px 0 0;
+    text-align: left;
+  }
+
+  .result {
+    width: 100%;
+    background: var(--black);
+    border-radius: 28px;
+    padding: 30px 26px 26px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .viewfinder {
+    position: relative;
+    width: min(280px, 100%);
+    aspect-ratio: 1 / 1;
+    padding: 26px;
+    margin: 0 auto;
+  }
+
+  .corner {
+    position: absolute;
+    width: 26px;
+    height: 26px;
+    border: 3px solid var(--white);
+  }
+  .corner.tl { top: 0; left: 0; border-right: none; border-bottom: none; border-radius: 6px 0 0 0; }
+  .corner.tr { top: 0; right: 0; border-left: none; border-bottom: none; border-radius: 0 6px 0 0; }
+  .corner.bl { bottom: 0; left: 0; border-right: none; border-top: none; border-radius: 0 0 0 6px; }
+  .corner.br { bottom: 0; right: 0; border-left: none; border-top: none; border-radius: 0 0 6px 0; }
+
+  .stage-wrap {
+    width: 100%;
+    height: 100%;
+    background: var(--white);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+  }
+
+  .empty-state {
+    text-align: center;
+    width: 100%;
+    color: var(--ink-muted);
+    font-size: 0.9rem;
+    margin: 0;
+    padding: 0 10px;
+  }
+
+  .qr-stage {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0.94);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+  }
+  .qr-stage.is-visible { opacity: 1; transform: scale(1); }
+  .qr-stage img, .qr-stage canvas { display: block; width: 100%; max-width: 100%; height: auto; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .qr-stage { transition: none; }
+    .btn, .mode-btn { transition: none; }
+  }
+
+  .encoded-value {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--card-muted);
+    max-width: 100%;
+    margin: 16px auto 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  @media (max-width: 380px) {
+    .input-row { flex-direction: column; gap: 4px; }
+    .btn-generate { width: 100%; }
+    .result { padding: 24px 16px 20px; }
+  }
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+  .actions .btn { padding: 14px 22px; }
+  .stage-wrap video, .stage-wrap img { display: block; width: 100%; height: 100%; object-fit: contain; border-radius: 6px; }
+  .out { width: 100%; margin-top: 18px; text-align: left; }
+  .out-text { color: var(--white); font-size: 0.98rem; line-height: 1.5; margin: 0; word-break: break-all; max-height: 9em; overflow: auto; }
+  .out-meta { color: var(--card-muted); font-size: 0.82rem; margin: 10px 0 0; }
+  a.btn-download { display: block; text-align: center; text-decoration: none; }
+  a.btn-download:focus-visible { outline: 3px solid var(--white); outline-offset: 3px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="brand">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <rect x="1" y="1" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="2"/>
+      <rect x="18" y="1" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="2"/>
+      <rect x="1" y="18" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="2"/>
+      <rect x="4" y="4" width="3" height="3" fill="currentColor"/>
+      <rect x="21" y="4" width="3" height="3" fill="currentColor"/>
+      <rect x="4" y="21" width="3" height="3" fill="currentColor"/>
+    </svg>
+    <span>Geno QR</span>
+  </div>
+
+  <h1>Paste a link. Get a code to scan.</h1>
+  <p class="subtext">Turns any link into a downloadable QR code, with your logo in the middle if you like. Everything is made in your browser, so nothing is uploaded or stored.</p>
+
+  <div class="modes" role="tablist" aria-label="Choose a generator">
+    <button type="button" class="mode-btn" role="tab" id="tabClassic" aria-selected="true" aria-controls="panelClassic">Classic</button>
+    <button type="button" class="mode-btn" role="tab" id="tabGen3" aria-selected="false" aria-controls="panelGen3" tabindex="-1">JAB Code</button>
+    <button type="button" class="mode-btn" role="tab" id="tabScan" aria-selected="false" aria-controls="panelScan" tabindex="-1">Scanner</button>
+  </div>
+
+  <section class="panel" id="panelClassic" role="tabpanel" aria-labelledby="tabClassic">
+  <div class="tool">
+    <div class="input-row">
+      <label for="linkInput" class="sr-only">Link to turn into a QR code</label>
+      <input
+        type="text"
+        id="linkInput"
+        placeholder="Paste your link here"
+        autocomplete="off"
+        autocapitalize="off"
+        autocorrect="off"
+        spellcheck="false"
+        inputmode="url"
+      />
+      <button type="button" class="btn btn-generate" id="generateBtn">Generate code</button>
+    </div>
+    <p class="error-text" id="inputError" role="alert" hidden></p>
+
+    <div class="logo-row">
+      <input type="file" id="logoInput" class="logo-input" accept="image/*" tabindex="-1" aria-hidden="true" />
+      <button type="button" class="btn btn-logo" id="logoBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="1.8"/><path d="M21 15l-5-5L5 21"/></svg>
+        <span id="logoLabelText">Add your logo</span>
+      </button>
+      <img class="logo-thumb" id="logoThumb" alt="Preview of your uploaded logo" hidden />
+      <button type="button" class="btn btn-text" id="logoRemove" hidden>Remove logo</button>
+    </div>
+    <p class="logo-hint">Optional. PNG, JPG, SVG, WebP or GIF, up to 5 MB. Your logo stays on your device.</p>
+    <p class="error-text" id="logoError" role="alert" hidden></p>
+  </div>
+
+  <div class="result">
+    <div class="viewfinder">
+      <span class="corner tl"></span>
+      <span class="corner tr"></span>
+      <span class="corner bl"></span>
+      <span class="corner br"></span>
+      <div class="stage-wrap">
+        <p class="empty-state" id="emptyState">Your code will appear here</p>
+        <div class="qr-stage" id="qrStage" hidden>
+          <canvas id="qrCanvas" width="1" height="1" role="img" aria-label="QR code"></canvas>
+        </div>
+      </div>
+    </div>
+    <p class="encoded-value" id="encodedValue" hidden></p>
+    <button type="button" class="btn btn-download" id="downloadBtn" hidden>Download PNG</button>
+  </div>
+  </section>
+
+  <section class="panel" id="panelGen3" role="tabpanel" aria-labelledby="tabGen3" hidden>
+    <div class="tool">
+      <div class="input-row">
+        <label for="g3Input" class="sr-only">Link or text to turn into a JAB code</label>
+        <input type="text" id="g3Input" placeholder="Paste a link or type any text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" />
+        <button type="button" class="btn btn-generate" id="g3Generate">Generate code</button>
+      </div>
+      <p class="error-text" id="g3Error" role="alert" hidden></p>
+
+      <div class="logo-row" id="g3LogoRow">
+        <input type="file" id="g3LogoInput" class="logo-input" accept="image/*" tabindex="-1" aria-hidden="true" />
+        <button type="button" class="btn btn-logo" id="g3LogoBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="1.8"/><path d="M21 15l-5-5L5 21"/></svg>
+          <span id="g3LogoText">Add your logo</span>
+        </button>
+        <img class="logo-thumb" id="g3LogoThumb" alt="Preview of your uploaded logo" hidden />
+        <button type="button" class="btn btn-text" id="g3LogoRemove" hidden>Remove logo</button>
+      </div>
+      <p class="logo-hint">Optional. PNG, JPG, SVG, WebP or GIF, up to 5 MB. The logo gets its own space in the middle, so the code stays readable. Your logo stays on your device.</p>
+      <p class="error-text" id="g3LogoError" role="alert" hidden></p>
+      <p class="logo-hint">JAB codes use 8 colors, so every square holds 3 bits. The longer your text, the bigger the grid.</p>
+      <p class="logo-hint">JAB codes are read with <a class="scan-link" href="#" id="toScanner">the Scanner tab</a>, not a normal phone camera.</p>
+    </div>
+
+    <div class="result">
+      <div class="viewfinder">
+        <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+        <div class="stage-wrap">
+          <p class="empty-state" id="g3Empty">Your code will appear here</p>
+          <div class="qr-stage" id="g3Stage" hidden>
+            <canvas id="g3Canvas" width="1" height="1" role="img" aria-label="JAB code"></canvas>
+          </div>
+        </div>
+      </div>
+      <p class="g3-line" id="g3Meta" hidden></p>
+      <p class="g3-line dim" id="g3Status" role="status" hidden></p>
+      <p class="encoded-value" id="g3Encoded" hidden></p>
+      <button type="button" class="btn btn-download" id="g3Download" hidden>Download PNG</button>
+    </div>
+  </section>
+
+  <section class="panel" id="panelScan" role="tabpanel" aria-labelledby="tabScan" hidden>
+  <div class="tool">
+    <div class="actions">
+      <button type="button" class="btn btn-generate" id="upBtn">Upload image</button>
+      <button type="button" class="btn btn-logo" id="photoBtn">Take photo</button>
+      <input type="file" id="file" class="logo-input" accept="image/*" tabindex="-1" aria-hidden="true" />
+      <input type="file" id="photo" class="logo-input" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true" />
+    </div>
+    <p class="logo-hint">Photos are best effort because cameras shift colors. For JAB codes, keep the code on a plain white background. Barcodes read from ordinary photos. If a photo will not read, upload the original PNG.</p>
+  </div>
+
+  <div class="result">
+    <div class="viewfinder">
+      <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+      <div class="stage-wrap">
+        <p class="empty-state" id="empty">Take a photo or upload an image</p>
+        <img id="preview" alt="The image you uploaded" hidden />
+      </div>
+    </div>
+    <p class="g3-line dim" id="status" role="status">Waiting for a code</p>
+    <div class="out" id="out" hidden>
+      <p class="out-text" id="outText"></p>
+      <p class="out-meta" id="outMeta"></p>
+      <a class="btn btn-download" id="openLink" target="_blank" rel="noopener noreferrer" hidden>Open link</a>
+      <button type="button" class="btn btn-download" id="copyBtn">Copy text</button>
+    </div>
+  </div>
+  </section>
+
+</div>
+
+<script>
+  // Load a library from cdnjs, and fall back to jsDelivr if that fails.
+  (function () {
+    function load(u, next) { var s = document.createElement('script'); s.src = u; if (next) s.onerror = next; document.head.appendChild(s); }
+    load('https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js', function () { load('https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js'); });
+  })();
+</script>
+<script>
+  // Load a library from cdnjs, and fall back to jsDelivr if that fails.
+  (function () {
+    function load(u, next) { var s = document.createElement('script'); s.src = u; if (next) s.onerror = next; document.head.appendChild(s); }
+    load('https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js', function () { load('https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js'); });
+  })();
+</script>
+<script>
+  // Barcode reader for browsers without BarcodeDetector. Tries jsDelivr, then unpkg.
+  (function () {
+    function load(u, next) { var s = document.createElement('script'); s.src = u; if (next) s.onerror = next; document.head.appendChild(s); }
+    load('https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js', function () { load('https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js'); });
+  })();
+</script>
+<script>
+  /* ================= shared QR drawing ================= */
+  const OUTPUT_PX = 1200;   // target width of the exported PNG
+  const QUIET = 4;          // quiet zone, in modules
+
+  // Rounded rectangle with an individual radius per corner (clockwise path).
+  function roundRect(ctx, x, y, w, h, tl, tr, br, bl) {
+    ctx.moveTo(x + tl, y);
+    ctx.lineTo(x + w - tr, y);
+    ctx.arcTo(x + w, y, x + w, y + tr, tr);
+    ctx.lineTo(x + w, y + h - br);
+    ctx.arcTo(x + w, y + h, x + w - br, y + h, br);
+    ctx.lineTo(x + bl, y + h);
+    ctx.arcTo(x, y + h, x, y + h - bl, bl);
+    ctx.lineTo(x, y + tl);
+    ctx.arcTo(x, y, x + tl, y, tl);
+    ctx.closePath();
+  }
+
+  function buildModel(value) {
+    if (qrcode.stringToBytesFuncs && qrcode.stringToBytesFuncs['UTF-8']) {
+      qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];
+    }
+    const qr = qrcode(0, 'H');   // highest error correction so a logo can sit on top
+    qr.addData(value);
+    qr.make();
+    return qr;
+  }
+
+  function drawLogo(ctx, img, x, y, side, ms, ink) {
+    const ringInset = ms * 0.5;
+    ctx.save();
+    ctx.lineWidth = ms * 0.28;
+    ctx.strokeStyle = ink;
+    ctx.beginPath();
+    const ringSide = side - ringInset * 2;
+    const ringR = ringSide * 0.28;
+    roundRect(ctx, x + ringInset, y + ringInset, ringSide, ringSide, ringR, ringR, ringR, ringR);
+    ctx.stroke();
+    ctx.restore();
+
+    const pad = ms * 1.4;
+    const box = side - pad * 2;
+    const iw = img.naturalWidth || 300;
+    const ih = img.naturalHeight || 300;
+    const scale = Math.min(box / iw, box / ih);
+    const w = iw * scale;
+    const h = ih * scale;
+
+    ctx.save();
+    ctx.beginPath();
+    const clipR = box * 0.18;
+    roundRect(ctx, x + pad, y + pad, box, box, clipR, clipR, clipR, clipR);
+    ctx.clip();
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, x + pad + (box - w) / 2, y + pad + (box - h) / 2, w, h);
+    ctx.restore();
+  }
+
+  // Draws a styled QR code onto `canvas`. Throws if the value is too long.
+  function drawQR(canvas, value, opts) {
+    const ink = opts.ink, paper = opts.paper, logo = opts.logo || null;
+    const qr = buildModel(value);
+    const n = qr.getModuleCount();
+    const total = n + QUIET * 2;
+    const ms = Math.max(4, Math.floor(OUTPUT_PX / total));   // whole pixels per module = crisp edges
+    const size = ms * total;
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = paper;
+    ctx.fillRect(0, 0, size, size);
+    ctx.fillStyle = ink;
+
+    let plate = 0, p0 = 0, p1 = 0;
+    if (logo) {
+      plate = Math.round(n * 0.28);
+      if (plate % 2 === 0) plate += 1;   // odd, so it is perfectly centred
+      p0 = (n - plate) / 2;
+      p1 = p0 + plate;
+    }
+    const inPlate = (r, c) => plate > 0 && r >= p0 && r < p1 && c >= p0 && c < p1;
+    const isFinder = (r, c) => (r < 7 && c < 7) || (r < 7 && c >= n - 7) || (r >= n - 7 && c < 7);
+    const dark = (r, c) =>
+      r >= 0 && c >= 0 && r < n && c < n && !isFinder(r, c) && !inPlate(r, c) && qr.isDark(r, c);
+
+    // Data modules: soft shapes that melt into their neighbours.
+    ctx.beginPath();
+    for (let r = 0; r < n; r++) {
+      for (let c = 0; c < n; c++) {
+        if (!dark(r, c)) continue;
+        const up = dark(r - 1, c), down = dark(r + 1, c);
+        const left = dark(r, c - 1), right = dark(r, c + 1);
+        const R = ms * 0.5;
+        roundRect(ctx, (c + QUIET) * ms, (r + QUIET) * ms, ms, ms,
+          !up && !left ? R : 0,
+          !up && !right ? R : 0,
+          !down && !right ? R : 0,
+          !down && !left ? R : 0);
+      }
+    }
+    ctx.fill();
+
+    // Finder eyes: rounded ring with a rounded pupil.
+    [[0, 0], [0, n - 7], [n - 7, 0]].forEach(function (pos) {
+      const x = (pos[1] + QUIET) * ms;
+      const y = (pos[0] + QUIET) * ms;
+      ctx.beginPath();
+      const o = ms * 2.2, h = ms * 1.4, d = ms * 1.1;
+      roundRect(ctx, x, y, ms * 7, ms * 7, o, o, o, o);
+      roundRect(ctx, x + ms, y + ms, ms * 5, ms * 5, h, h, h, h);
+      roundRect(ctx, x + ms * 2, y + ms * 2, ms * 3, ms * 3, d, d, d, d);
+      ctx.fill('evenodd');
+    });
+
+    if (logo) drawLogo(ctx, logo, (p0 + QUIET) * ms, (p0 + QUIET) * ms, plate * ms, ms, ink);
+  }
+
+  function saveCanvas(canvas, filename) {
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = canvas.toDataURL('image/png');
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
+
+  function fadeIn(stage) {
+    stage.classList.remove('is-visible');
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () { stage.classList.add('is-visible'); });
+    });
+  }
+
+
+  /* ===== JAB code: N x N modules, 8 colors (R, G, B each on or off = 3 bits per module) =====
+     Color index = R | G<<1 | B<<2. Four 3x3 corner finders (red, green, blue, yellow around a black dot) fix orientation.
+     Payload = 16-bit length + UTF-8 bytes + CRC-16, mapped to modules in reading order and XOR-masked. */
+  const JAB_PAL = [[0,0,0],[255,0,0],[0,255,0],[255,255,0],[0,0,255],[255,0,255],[0,255,255],[255,255,255]];
+  const jabCorners = function (n) { return [[0, 0, 1], [0, n - 1, 2], [n - 1, n - 1, 4], [n - 1, 0, 3]]; };
+  function jabCrc(b) { let c = 0xFFFF; for (let i = 0; i < b.length; i++) { c ^= b[i] << 8; for (let k = 0; k < 8; k++) c = (c & 0x8000) ? ((c << 1) ^ 0x1021) & 0xFFFF : (c << 1) & 0xFFFF; } return c; }
+  function jabMask(i) { return Math.imul(i + 1, 2654435761) >>> 29; }
+  // Optional logo plate: an odd square of modules in the centre that carries no data.
+  function jabPlate(n, logo) { if (!logo) return 0; let p = Math.round(n * 0.26); if (p % 2 === 0) p++; return p; }
+  function jabReserved(r, c, n, p) {
+    if ((r < 3 || r >= n - 3) && (c < 3 || c >= n - 3)) return true;
+    const p0 = (n - p) / 2; return p > 0 && r >= p0 && r < p0 + p && c >= p0 && c < p0 + p;
+  }
+  function jabCap(n, p) { return (n * n - 36 - p * p) * 3; }
+
+  function jabEncode(text, logo) {
+    const data = new TextEncoder().encode(text), len = data.length;
+    if (len > 65535) return null;
+    const body = [len >> 8, len & 255].concat(Array.from(data)), crc = jabCrc(body);
+    body.push(crc >> 8, crc & 255);
+    const bits = [];
+    body.forEach(function (b) { for (let i = 7; i >= 0; i--) bits.push((b >> i) & 1); });
+    let n = logo ? 21 : 12; while (jabCap(n, jabPlate(n, logo)) < bits.length && n <= 120) n++;
+    if (n > 120) return null;
+    const p = jabPlate(n, logo);
+    const M = []; for (let r = 0; r < n; r++) M.push(new Array(n).fill(0));
+    jabCorners(n).forEach(function (q) {
+      const r0 = q[0] < 3 ? 0 : n - 3, c0 = q[1] < 3 ? 0 : n - 3;
+      for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) M[r0 + i][c0 + j] = (i === 1 && j === 1) ? 0 : q[2];
+    });
+    let k = 0;
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+      if (jabReserved(r, c, n, p)) continue;
+      const v = (bits[k * 3] || 0) | ((bits[k * 3 + 1] || 0) << 1) | ((bits[k * 3 + 2] || 0) << 2);
+      M[r][c] = v ^ jabMask(k); k++;
+    }
+    return M;
+  }
+
+  function jabDecode(M, logo) {
+    const n = M.length, p = jabPlate(n, logo), bits = []; let k = 0;
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+      if (jabReserved(r, c, n, p)) continue;
+      const v = M[r][c] ^ jabMask(k); k++;
+      bits.push(v & 1, (v >> 1) & 1, (v >> 2) & 1);
+    }
+    const byteAt = function (i) { let x = 0; for (let j = 0; j < 8; j++) x = (x << 1) | bits[i * 8 + j]; return x; };
+    const len = (byteAt(0) << 8) | byteAt(1);
+    if ((len + 4) * 8 > bits.length) return null;
+    const body = []; for (let i = 0; i < len + 2; i++) body.push(byteAt(i));
+    if (jabCrc(body) !== ((byteAt(len + 2) << 8) | byteAt(len + 3))) return null;
+    try { return new TextDecoder('utf-8', { fatal: true }).decode(Uint8Array.from(body.slice(2))); } catch (e) { return null; }
+  }
+
+  function jabRotate(M) { const n = M.length; return M.map(function (row, r) { return row.map(function (_, c) { return M[n - 1 - c][r]; }); }); }
+  function jabFinderOk(M) { const n = M.length; return jabCorners(n).every(function (q) { return M[q[0]][q[1]] === q[2]; }); }
+
+  // Crop to the non-white area, then try each grid size until the checksum passes.
+  function jabScan(img) {
+    const w = img.width, h = img.height, d = img.data;
+    let x0 = w, y0 = h, x1 = -1, y1 = -1;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const p = (y * w + x) * 4;
+      if (Math.min(d[p], d[p + 1], d[p + 2]) < 110) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    }
+    if (x1 < 0) return null;
+    const bw = x1 - x0 + 1, bh = y1 - y0 + 1;
+    if (bw < 24 || bh < 24) return null;
+    for (let n = 12; n <= 120; n++) {
+      if (bw / n < 2) break;
+      let M = [];
+      for (let r = 0; r < n; r++) {
+        const row = [];
+        for (let c = 0; c < n; c++) {
+          const px = Math.min(w - 1, Math.round(x0 + (c + 0.5) * bw / n)), py = Math.min(h - 1, Math.round(y0 + (r + 0.5) * bh / n)), q = (py * w + px) * 4;
+          row.push((d[q] > 127 ? 1 : 0) | (d[q + 1] > 127 ? 2 : 0) | (d[q + 2] > 127 ? 4 : 0));
+        }
+        M.push(row);
+      }
+      for (let t = 0; t < 4; t++, M = jabRotate(M)) {
+        if (!jabFinderOk(M)) continue;
+        for (let lg = 0; lg < 2; lg++) {   // with and without a logo plate
+          const text = jabDecode(M, !!lg);
+          if (text !== null) return { text: text, n: n };
+        }
+      }
+    }
+    return null;
+  }
+
+  function jabDraw(canvas, M, logo) {
+    const n = M.length, p = jabPlate(n, !!logo), p0 = (n - p) / 2, total = n + QUIET * 2, ms = Math.max(4, Math.floor(OUTPUT_PX / total)), size = ms * total;
+    canvas.width = size; canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, size, size);
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+      if (jabReserved(r, c, n, p) && !(r < 3 || r >= n - 3) && !(c < 3 || c >= n - 3)) continue;   // plate stays white
+      if (p && r >= p0 && r < p0 + p && c >= p0 && c < p0 + p) continue;
+      ctx.fillStyle = 'rgb(' + JAB_PAL[M[r][c]].join(',') + ')';
+      ctx.fillRect((c + QUIET) * ms, (r + QUIET) * ms, ms, ms);
+    }
+    if (logo) drawLogo(ctx, logo, (p0 + QUIET) * ms, (p0 + QUIET) * ms, p * ms, ms, '#000000');
+  }
+
+  /* ================= mode switch ================= */
+  (function () {
+    const ids = ['Classic', 'Gen3', 'Scan'];
+    const tabs = ids.map(function (n) { return document.getElementById('tab' + n); });
+    const panels = ['panelClassic', 'panelGen3', 'panelScan'].map(function (n) { return document.getElementById(n); });
+    const h1 = document.querySelector('h1'), sub = document.querySelector('.subtext');
+    const heads = [
+      [h1.textContent, sub.textContent],
+      [h1.textContent, 'Turns any link or text into a JAB code, a color code that stores 3 bits in every square. Everything is made in your browser, so nothing is uploaded or stored.'],
+      ['Read a code from a photo.', 'Reads JAB codes, ordinary QR codes and barcodes. Upload the PNG for the most reliable read. Everything stays on your device.']
+    ];
+    function select(i, focus) {
+      tabs.forEach(function (t, j) {
+        t.setAttribute('aria-selected', j === i ? 'true' : 'false');
+        t.tabIndex = j === i ? 0 : -1;
+        panels[j].hidden = j !== i;
+      });
+      h1.textContent = heads[i][0]; sub.textContent = heads[i][1];
+      if (focus) tabs[i].focus();
+    }
+    tabs.forEach(function (t, i) {
+      t.addEventListener('click', function () { select(i, false); });
+      t.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+          e.preventDefault();
+          select((i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length, true);
+        }
+      });
+    });
+    document.getElementById('toScanner').addEventListener('click', function (e) { e.preventDefault(); select(2, true); });
+  })();
+
+  /* ================= classic generator ================= */
+  (function () {
+    const MAX_LOGO_BYTES = 5 * 1024 * 1024;
+    let lastValue = '';
+    let logoImg = null;
+    let logoURL = null;
+
+    const input = document.getElementById('linkInput');
+    const errorEl = document.getElementById('inputError');
+    const emptyState = document.getElementById('emptyState');
+    const qrStage = document.getElementById('qrStage');
+    const canvas = document.getElementById('qrCanvas');
+    const encodedValue = document.getElementById('encodedValue');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const generateBtn = document.getElementById('generateBtn');
+    const logoInput = document.getElementById('logoInput');
+    const logoBtn = document.getElementById('logoBtn');
+    const logoRow = document.querySelector('.logo-row');
+    const logoLabelText = document.getElementById('logoLabelText');
+    const logoThumb = document.getElementById('logoThumb');
+    const logoRemove = document.getElementById('logoRemove');
+    const logoError = document.getElementById('logoError');
+
+    function showError(message) { errorEl.textContent = message; errorEl.hidden = false; }
+    function clearError() { errorEl.hidden = true; }
+    function showLogoError(message) { logoError.textContent = message; logoError.hidden = false; }
+    function clearLogoError() { logoError.hidden = true; }
+
+    function render() {
+      drawQR(canvas, lastValue, { ink: '#000000', paper: '#ffffff', logo: logoImg });
+      canvas.setAttribute('aria-label', 'QR code for ' + lastValue + (logoImg ? ', with your logo in the centre' : ''));
+    }
+
+    function generate() {
+      const value = input.value.trim();
+      if (!value) {
+        showError('Add a link first, then generate.');
+        input.focus();
+        return;
+      }
+      if (typeof qrcode === 'undefined') {
+        showError('The QR engine did not load. Check your connection and reload the page.');
+        return;
+      }
+      lastValue = value;
+      try {
+        render();
+      } catch (err) {
+        showError('That link is too long to fit in a QR code. Try a shorter one.');
+        return;
+      }
+      clearError();
+      emptyState.hidden = true;
+      qrStage.hidden = false;
+      fadeIn(qrStage);
+      encodedValue.textContent = value;
+      encodedValue.title = value;
+      encodedValue.hidden = false;
+      downloadBtn.hidden = false;
+    }
+
+    function refreshIfGenerated() {
+      if (!lastValue) return;
+      try { render(); } catch (err) { showError('Could not redraw the code. Try generating it again.'); }
+    }
+
+    function setLogo(img, url) {
+      if (logoURL) URL.revokeObjectURL(logoURL);
+      logoImg = img;
+      logoURL = url;
+      logoThumb.src = url;
+      logoThumb.hidden = false;
+      logoRemove.hidden = false;
+      logoLabelText.textContent = 'Change logo';
+      clearLogoError();
+      refreshIfGenerated();
+    }
+
+    function removeLogo() {
+      if (logoURL) URL.revokeObjectURL(logoURL);
+      logoImg = null;
+      logoURL = null;
+      logoInput.value = '';
+      logoThumb.hidden = true;
+      logoThumb.removeAttribute('src');
+      logoRemove.hidden = true;
+      logoLabelText.textContent = 'Add your logo';
+      clearLogoError();
+      refreshIfGenerated();
+      logoBtn.focus();
+    }
+
+    function onLogoChosen(file) {
+      if (!file) return;
+      if (!/^image\//.test(file.type)) {
+        showLogoError('That file is not an image. Choose a PNG, JPG, SVG, WebP or GIF.');
+        return;
+      }
+      if (file.size > MAX_LOGO_BYTES) {
+        showLogoError('That image is over 5 MB. Choose a smaller file.');
+        return;
+      }
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = function () { setLogo(img, url); };
+      img.onerror = function () {
+        URL.revokeObjectURL(url);
+        showLogoError('That image could not be read. Try a different file.');
+      };
+      img.src = url;
+    }
+
+    generateBtn.addEventListener('click', generate);
+    downloadBtn.addEventListener('click', function () { if (lastValue) saveCanvas(canvas, 'geno-qr.png'); });
+    logoBtn.addEventListener('click', function () {
+      logoInput.value = '';   // so choosing the same file again still fires "change"
+      logoInput.click();
+    });
+    logoInput.addEventListener('change', function () {
+      onLogoChosen(logoInput.files && logoInput.files[0]);
+    });
+    ['dragenter', 'dragover'].forEach(function (t) {
+      logoRow.addEventListener(t, function (e) { e.preventDefault(); logoRow.classList.add('is-drop'); });
+    });
+    ['dragleave', 'drop'].forEach(function (t) {
+      logoRow.addEventListener(t, function (e) { e.preventDefault(); logoRow.classList.remove('is-drop'); });
+    });
+    logoRow.addEventListener('drop', function (e) {
+      onLogoChosen(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]);
+    });
+    logoRemove.addEventListener('click', removeLogo);
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); generate(); }
+    });
+    input.addEventListener('input', clearError);
+  })();
+
+  /* ================= JAB generator ================= */
+  (function () {
+    const MAX_LOGO_BYTES = 5 * 1024 * 1024;
+    let last = '', logo = null, logoURL = null, token = 0;
+    const $ = function (id) { return document.getElementById(id); };
+    const input = $('g3Input'), errorEl = $('g3Error'), empty = $('g3Empty'), stage = $('g3Stage'),
+      canvas = $('g3Canvas'), encoded = $('g3Encoded'), dlBtn = $('g3Download'), meta = $('g3Meta'), status = $('g3Status'),
+      lInput = $('g3LogoInput'), lBtn = $('g3LogoBtn'), lRow = $('g3LogoRow'), lText = $('g3LogoText'),
+      lThumb = $('g3LogoThumb'), lRemove = $('g3LogoRemove'), lError = $('g3LogoError');
+
+    function showError(m) { errorEl.textContent = m; errorEl.hidden = false; }
+
+    function render() {
+      const M = jabEncode(last, !!logo);
+      if (!M) throw new Error('too long');
+      jabDraw(canvas, M, logo);
+      const n = M.length;
+      meta.textContent = '8 colors \u00B7 ' + n + ' \u00D7 ' + n + ' grid, sized to your text'; meta.hidden = false;
+      canvas.setAttribute('aria-label', 'JAB code for ' + last + (logo ? ', with your logo in the centre' : '') + ', 8 colors');
+      const mine = ++token;
+      status.textContent = 'Checking that the code reads back\u2026'; status.hidden = false;
+      setTimeout(function () {
+        if (mine !== token) return;
+        let ok = false;
+        try { const r = jabScan(canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height)); ok = !!r && r.text === last; } catch (e) {}
+        if (mine !== token) return;
+        status.textContent = ok ? 'Checked: the code reads back correctly.' : 'Could not confirm this code reads back. Try without the logo, or shorter text.';
+      }, 40);
+    }
+
+    function refresh() {
+      if (!last) return;
+      try { render(); } catch (e) { showError('That is too long for a JAB code with a logo. Remove the logo or shorten the text.'); }
+    }
+
+    function generate() {
+      const value = input.value.trim();
+      if (!value) { showError('Add a link or some text first, then generate.'); input.focus(); return; }
+      last = value;
+      try { render(); } catch (e) { showError('That is too long for one JAB code. Try something shorter.'); last = ''; return; }
+      errorEl.hidden = true; empty.hidden = true; stage.hidden = false; fadeIn(stage);
+      encoded.textContent = value; encoded.title = value; encoded.hidden = false; dlBtn.hidden = false;
+    }
+
+    function setLogo(img, url) {
+      if (logoURL) URL.revokeObjectURL(logoURL);
+      logo = img; logoURL = url;
+      lThumb.src = url; lThumb.hidden = false; lRemove.hidden = false; lText.textContent = 'Change logo';
+      lError.hidden = true; errorEl.hidden = true; refresh();
+    }
+    function removeLogo() {
+      if (logoURL) URL.revokeObjectURL(logoURL);
+      logo = null; logoURL = null; lInput.value = '';
+      lThumb.hidden = true; lThumb.removeAttribute('src'); lRemove.hidden = true; lText.textContent = 'Add your logo';
+      lError.hidden = true; errorEl.hidden = true; refresh(); lBtn.focus();
+    }
+    function onFile(file) {
+      if (!file) return;
+      const fail = function (m) { lError.textContent = m; lError.hidden = false; };
+      if (!/^image\//.test(file.type)) return fail('That file is not an image. Choose a PNG, JPG, SVG, WebP or GIF.');
+      if (file.size > MAX_LOGO_BYTES) return fail('That image is over 5 MB. Choose a smaller file.');
+      const url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () { setLogo(img, url); };
+      img.onerror = function () { URL.revokeObjectURL(url); fail('That image could not be read. Try a different file.'); };
+      img.src = url;
+    }
+
+    $('g3Generate').addEventListener('click', generate);
+    dlBtn.addEventListener('click', function () { if (last) saveCanvas(canvas, 'geno-jab-code.png'); });
+    lBtn.addEventListener('click', function () { lInput.value = ''; lInput.click(); });
+    lInput.addEventListener('change', function () { onFile(lInput.files && lInput.files[0]); });
+    ['dragenter', 'dragover'].forEach(function (t) { lRow.addEventListener(t, function (e) { e.preventDefault(); lRow.classList.add('is-drop'); }); });
+    ['dragleave', 'drop'].forEach(function (t) { lRow.addEventListener(t, function (e) { e.preventDefault(); lRow.classList.remove('is-drop'); }); });
+    lRow.addEventListener('drop', function (e) { onFile(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]); });
+    lRemove.addEventListener('click', removeLogo);
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); generate(); } });
+    input.addEventListener('input', function () { errorEl.hidden = true; });
+  })();
+
+  /* ================= scanner ================= */
+  (function () {
+  const $ = function (id) { return document.getElementById(id); };
+  const preview = $('preview'), empty = $('empty'), statusEl = $('status');
+  const work = document.createElement('canvas'), wctx = work.getContext('2d', { willReadFrequently: true });
+    
+
+  function say(m) { statusEl.textContent = m; }
+
+  function finish(s) {
+    const text = s.text;
+    $('outText').textContent = text;
+    $('outMeta').textContent = s.kind ? s.kind : s.n ? 'JAB code \u00B7 8 colors' : 'Ordinary QR code';
+    let href = null;
+    try { const u = new URL(text); if (u.protocol === 'http:' || u.protocol === 'https:') href = u.href; } catch (e) {}
+    const a = $('openLink');
+    a.hidden = !href; if (href) a.href = href;
+    $('out').hidden = false;
+    say('Code read.');
+  }
+
+  // Barcodes (EAN, UPC, Code 128, and more): the browser's detector first, then the ZXing library.
+  async function readBars(url) {
+    const pretty = function (f) { return 'Barcode \u00B7 ' + String(f).replace(/_/g, ' ').toUpperCase(); };
+    if ('BarcodeDetector' in window) {
+      try { const r = await new BarcodeDetector().detect(work); if (r.length && r[0].rawValue) return { text: r[0].rawValue, kind: pretty(r[0].format) }; } catch (e) {}
+    }
+    if (typeof ZXing !== 'undefined') {
+      try { const r = await new ZXing.BrowserMultiFormatReader().decodeFromImageUrl(url); return { text: r.getText(), kind: pretty(ZXing.BarcodeFormat[r.getBarcodeFormat()]) }; } catch (e) {}
+    }
+    return null;
+  }
+
+  function readFile(file) {
+    if (!file) return;
+    if (!/^image\//.test(file.type)) { say('That file is not an image. Choose a PNG or JPG.'); return; }
+    $('out').hidden = true;
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = function () {
+      preview.src = url; preview.hidden = false; empty.hidden = true;
+      const k = Math.min(1, 2400 / Math.max(img.naturalWidth, img.naturalHeight));
+      work.width = Math.round(img.naturalWidth * k); work.height = Math.round(img.naturalHeight * k);
+      wctx.fillStyle = '#ffffff'; wctx.fillRect(0, 0, work.width, work.height);
+      wctx.drawImage(img, 0, 0, work.width, work.height);
+      say('Reading\u2026');
+      setTimeout(async function () {
+        const px = wctx.getImageData(0, 0, work.width, work.height);
+        let s = jabScan(px);
+        if (!s && typeof jsQR !== 'undefined') { const q = jsQR(px.data, px.width, px.height); if (q) s = { text: q.data }; }
+        if (!s) s = await readBars(url);
+        if (s) finish(s);
+        else say('No code found. Use a sharp image with the whole code and its white border visible.');
+      }, 30);
+    };
+    img.onerror = function () { say('That image could not be read. Try a different file.'); };
+    img.src = url;
+  }
+
+  $('upBtn').addEventListener('click', function () { $('file').value = ''; $('file').click(); });
+  $('photoBtn').addEventListener('click', function () { $('photo').value = ''; $('photo').click(); });
+  $('photo').addEventListener('change', function () { readFile($('photo').files && $('photo').files[0]); });
+  $('file').addEventListener('change', function () { readFile($('file').files && $('file').files[0]); });
+  $('copyBtn').addEventListener('click', function () {
+    const t = $('outText').textContent;
+    if (navigator.clipboard) navigator.clipboard.writeText(t).then(function () { $('copyBtn').textContent = 'Copied'; setTimeout(function () { $('copyBtn').textContent = 'Copy text'; }, 1500); }, function () { say('Could not copy. Select the text and copy it by hand.'); });
+  });
+  })();
+</script>
+</body>
+</html>
